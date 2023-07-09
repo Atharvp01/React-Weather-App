@@ -2,7 +2,13 @@ import "./App.css";
 import Weather from "./Weather";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 function App() {
-  const client = new QueryClient();
+  const client = new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: true,
+      },
+    },
+  });
   return (
     <>
       <QueryClientProvider client={client}>

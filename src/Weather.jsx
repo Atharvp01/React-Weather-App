@@ -3,24 +3,31 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 
 const Weather = () => {
-  const apiKey = `d5702be6756a4739afd23851230607`;
+  const [buttonClicked, setButtonClicked] = useState(false);
+  const [city, setCity] = useState(`pune`);
+  const [bgImage, setBgImage] = useState(`null`);
 
-  let city = `new delhi`;
+  const handleClick = () => {
+    setButtonClicked(true);
+  };
+
+  const handleChange = (event) => {
+    setButtonClicked(false);
+    setCity(event.target.value);
+  };
+
+  const apiKey = `d5702be6756a4739afd23851230607`;
 
   const API = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=no`;
 
-  const { data, isError } = useQuery(["currentData"], async () => {
-    return Axios.get(API).then((response) => response.data);
+  const { data, refetch } = useQuery(["currentData"], async () => {
+    return await Axios.get(API).then((response) => {
+      return response.data;
+    });
   });
-
-  if (isError) {
-    alert("No Matching Location Found");
-  }
-
-  const [bgImage, setBgImage] = useState(``);
-
-  useEffect(() => {
-    const handleImage = () => {
+  const handleImage = () => {
+    refetch();
+    setTimeout(() => {
       if (data && data.current && data.current.condition) {
         const conditionCode = data.current.condition.code;
         const is_day = data.current.is_day === 1;
@@ -35,7 +42,8 @@ const Weather = () => {
             : `/assets/night/rainy.jpg`,
           1030: is_day ? `/assets/day/mist.jpg` : `/assets/night/mist.jpg`,
         };
-
+        console.log(data.current.condition.text);
+        console.log(data);
         const imageMapping = Object.entries(imagesUrl).find(
           ([codes, imageUrl]) =>
             codes.split(",").includes(conditionCode.toString())
@@ -46,10 +54,16 @@ const Weather = () => {
         } else {
           alert("something wrong");
         }
-      }
-    };
-    handleImage();
-  }, [data]);
+      } else console.log("data yet to be fetched");
+    }, 1000);
+  };
+
+  useEffect(() => {
+    if (buttonClicked) {
+      handleImage();
+    }
+    console.log(bgImage);
+  }, [data, buttonClicked]);
 
   return (
     <>
@@ -60,11 +74,13 @@ const Weather = () => {
         <h1 className="text-3xl font-bold pt-8 pl-8 font-mono text-white">
           The Weather
           <br />
-          {data.current.condition.text}
-          <br />
           {city.charAt(0).toUpperCase()}
           {city.slice(1)}
         </h1>
+        <div className="input-field">
+          <input placeholder="Search" onChange={handleChange} />
+          <button onClick={handleClick}>Search</button>
+        </div>
       </div>
     </>
   );
